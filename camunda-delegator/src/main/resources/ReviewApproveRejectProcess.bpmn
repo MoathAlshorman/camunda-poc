@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://www.signavio.com/bpmn20" exporter="Camunda Modeler" exporterVersion="4.0.0" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd">
+  <message id="Message_0dv2p5f" name="dataSubmitted" />
+  <message id="Message_1xewaj0" name="dataReviewed" />
+  <process id="reviewApproveRejectProcess" name="reviewApproveRejectProcess" isExecutable="true">
+    <serviceTask id="service_task_send_rejection_notification" name="Send rejection notification" camunda:delegateExpression="#{mailSender}">
+      <incoming>no</incoming>
+      <outgoing>SequenceFlow_4</outgoing>
+    </serviceTask>
+    <exclusiveGateway id="gateway_approved" name="Approved?">
+      <incoming>Flow_1kw2e30</incoming>
+      <incoming>Flow_1kvipz1</incoming>
+      <outgoing>no</outgoing>
+      <outgoing>yes</outgoing>
+    </exclusiveGateway>
+    <exclusiveGateway id="gateway_join" name="Join">
+      <incoming>SequenceFlow_4</incoming>
+      <incoming>SequenceFlow_3</incoming>
+      <outgoing>SequenceFlow_5</outgoing>
+    </exclusiveGateway>
+    <serviceTask id="service_task_save_data" name="Publish data" camunda:delegateExpression="#{publisher}">
+      <incoming>yes</incoming>
+      <outgoing>SequenceFlow_3</outgoing>
+    </serviceTask>
+    <endEvent id="data_handled" name="Data handled">
+      <incoming>SequenceFlow_5</incoming>
+    </endEvent>
+    <intermediateCatchEvent id="data_reviewed" name="Data reviewed">
+      <incoming>Flow_0nzgu9f</incoming>
+      <outgoing>Flow_1kw2e30</outgoing>
+      <messageEventDefinition id="MessageEventDefinition_0cxtxwh" messageRef="Message_1xewaj0" />
+    </intermediateCatchEvent>
+    <sequenceFlow id="Flow_1kw2e30" sourceRef="data_reviewed" targetRef="gateway_approved" />
+    <sequenceFlow id="SequenceFlow_3" name="" sourceRef="service_task_save_data" targetRef="gateway_join" />
+    <sequenceFlow id="SequenceFlow_5" name="" sourceRef="gateway_join" targetRef="data_handled" />
+    <sequenceFlow id="yes" name="Yes" sourceRef="gateway_approved" targetRef="service_task_save_data">
+      <extensionElements>
+        <camunda:properties>
+          <camunda:property name="probability" value="87" />
+        </camunda:properties>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression" id="FormalExpression_2">#{approved}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="no" name="No" sourceRef="gateway_approved" targetRef="service_task_send_rejection_notification">
+      <extensionElements>
+        <camunda:properties>
+          <camunda:property name="probability" value="13" />
+        </camunda:properties>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression" id="FormalExpression_1">#{!approved}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="SequenceFlow_4" name="" sourceRef="service_task_send_rejection_notification" targetRef="gateway_join" />
+    <boundaryEvent id="Event_0vfom2m" name="Publisher is not available" attachedToRef="service_task_save_data">
+      <outgoing>Flow_1t76ofs</outgoing>
+      <errorEventDefinition id="ErrorEventDefinition_0j8u6zm" errorRef="Error_0hzleji" />
+    </boundaryEvent>
+    <sequenceFlow id="Flow_1t76ofs" sourceRef="Event_0vfom2m" targetRef="Event_0pfmhj0" />
+    <intermediateCatchEvent id="Event_0pfmhj0" name="Try after 5 seconds">
+      <incoming>Flow_1t76ofs</incoming>
+      <outgoing>Flow_1kvipz1</outgoing>
+      <timerEventDefinition id="TimerEventDefinition_1pl5fp4">
+        <timeDuration xsi:type="tFormalExpression">PT5S</timeDuration>
+      </timerEventDefinition>
+    </intermediateCatchEvent>
+    <sequenceFlow id="Flow_1kvipz1" sourceRef="Event_0pfmhj0" targetRef="gateway_approved" />
+    <sequenceFlow id="Flow_0nzgu9f" sourceRef="data_submitted" targetRef="data_reviewed" />
+    <startEvent id="data_submitted" name="Data submitted">
+      <outgoing>Flow_0nzgu9f</outgoing>
+      <messageEventDefinition id="MessageEventDefinition_1v2sn1v" messageRef="Message_0dv2p5f" />
+    </startEvent>
+  </process>
+  <message id="Message_1qfx1ch" name="dataFetched" />
+  <error id="Error_0hzleji" name="PublisherError" errorCode="PublisherError" camunda:errorMessage="PublisherError" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_TwitterDemoProcess">
+    <bpmndi:BPMNPlane id="BPMNPlane_TwitterDemoProcess" bpmnElement="reviewApproveRejectProcess">
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_4" bpmnElement="SequenceFlow_4" sourceElement="BPMNShape_Send_rejection_notification_3" targetElement="BPMNShape_Exclusive_Databased_Gateway_3">
+        <omgdi:waypoint x="700" y="124" />
+        <omgdi:waypoint x="800" y="124" />
+        <omgdi:waypoint x="800" y="174" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="872" y="102" width="6" height="6" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_no" bpmnElement="no" sourceElement="BPMNShape_Approved__3" targetElement="BPMNShape_Send_rejection_notification_3">
+        <omgdi:waypoint x="487" y="174" />
+        <omgdi:waypoint x="487" y="124" />
+        <omgdi:waypoint x="600" y="124" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="501" y="132" width="14" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_yes" bpmnElement="yes" sourceElement="BPMNShape_Approved__3" targetElement="BPMNShape_Publish_on_Twitter_3">
+        <omgdi:waypoint x="487" y="214" />
+        <omgdi:waypoint x="487" y="274" />
+        <omgdi:waypoint x="600" y="274" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="499" y="252" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_5" bpmnElement="SequenceFlow_5" sourceElement="BPMNShape_Exclusive_Databased_Gateway_3" targetElement="BPMNShape_EndNoneEvent_3">
+        <omgdi:waypoint x="820" y="194" />
+        <omgdi:waypoint x="936" y="194" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="722" y="127" width="6" height="6" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_3" bpmnElement="SequenceFlow_3" sourceElement="BPMNShape_Publish_on_Twitter_3" targetElement="BPMNShape_Exclusive_Databased_Gateway_3">
+        <omgdi:waypoint x="700" y="274" />
+        <omgdi:waypoint x="800" y="274" />
+        <omgdi:waypoint x="800" y="214" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="639" y="226" width="6" height="6" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kw2e30_di" bpmnElement="Flow_1kw2e30">
+        <omgdi:waypoint x="338" y="194" />
+        <omgdi:waypoint x="467" y="194" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1t76ofs_di" bpmnElement="Flow_1t76ofs">
+        <omgdi:waypoint x="650" y="332" />
+        <omgdi:waypoint x="650" y="352" />
+        <omgdi:waypoint x="505" y="352" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kvipz1_di" bpmnElement="Flow_1kvipz1">
+        <omgdi:waypoint x="469" y="352" />
+        <omgdi:waypoint x="410" y="352" />
+        <omgdi:waypoint x="410" y="194" />
+        <omgdi:waypoint x="467" y="194" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0nzgu9f_di" bpmnElement="Flow_0nzgu9f">
+        <omgdi:waypoint x="205" y="194" />
+        <omgdi:waypoint x="302" y="194" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BPMNShape_Send_rejection_notification_3" bpmnElement="service_task_send_rejection_notification">
+        <omgdc:Bounds x="600" y="84" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Approved__3" bpmnElement="gateway_approved" isMarkerVisible="true">
+        <omgdc:Bounds x="467" y="174" width="40" height="40" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="507" y="207" width="54" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Exclusive_Databased_Gateway_3" bpmnElement="gateway_join" isMarkerVisible="true">
+        <omgdc:Bounds x="780" y="174" width="40" height="40" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="820" y="207" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Publish_on_Twitter_3" bpmnElement="service_task_save_data">
+        <omgdc:Bounds x="600" y="234" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_EndNoneEvent_3" bpmnElement="data_handled">
+        <omgdc:Bounds x="936" y="180" width="28" height="28" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="918" y="210" width="66" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ywe3x9_di" bpmnElement="Event_0pfmhj0">
+        <omgdc:Bounds x="469" y="334" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="463" y="377" width="50" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1pi8dn8_di" bpmnElement="data_reviewed">
+        <omgdc:Bounds x="302" y="176" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="284" y="219" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_19o5esh_di" bpmnElement="data_submitted">
+        <omgdc:Bounds x="175" y="179" width="30" height="30" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="153" y="219" width="74" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_11xl06w_di" bpmnElement="Event_0vfom2m">
+        <omgdc:Bounds x="632" y="296" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="552" y="316" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
